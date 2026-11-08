@@ -1,0 +1,245 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Dubluri.App.ViewModels"
+        xmlns:scan="using:Dubluri.Core.Scanning"
+        x:Class="Dubluri.App.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="{Binding WindowTitle}"
+        Icon="/Assets/dubluri.ico"
+        Width="1240" Height="820" MinWidth="980" MinHeight="620"
+        WindowStartupLocation="CenterScreen">
+
+  <DockPanel Margin="10">
+
+    <!-- avertismente -->
+    <StackPanel DockPanel.Dock="Top" Spacing="6">
+      <Border Background="#FDECEA" BorderBrush="#D32F2F" BorderThickness="1" Padding="8" CornerRadius="3"
+              IsVisible="{Binding SettingsError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="Am înțeles, continui cu setări noi" Command="{Binding AcknowledgeSettingsErrorCommand}" />
+          <TextBlock Text="{Binding SettingsError}" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="#B71C1C" />
+        </DockPanel>
+      </Border>
+      <Border Background="#FDECEA" BorderBrush="#D32F2F" BorderThickness="1" Padding="8" CornerRadius="3" Margin="0,0,0,6"
+              IsVisible="{Binding MissingProtectedText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="Reverifică" Command="{Binding RecheckProtectedCommand}" />
+          <TextBlock Text="{Binding MissingProtectedText}" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="#B71C1C" />
+        </DockPanel>
+      </Border>
+    </StackPanel>
+
+    <!-- progres -->
+    <Border DockPanel.Dock="Bottom" BorderBrush="#DDDDDD" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,8,0,0">
+      <DockPanel>
+        <Button DockPanel.Dock="Right" Content="Anulează" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" Margin="10,0,0,0" />
+        <StackPanel Spacing="3">
+          <TextBlock Text="{Binding ProgressText}" TextTrimming="CharacterEllipsis" />
+          <ProgressBar Height="8" Minimum="0" Maximum="100" Value="{Binding ProgressValue}" IsIndeterminate="{Binding IsIndeterminate}" IsVisible="{Binding IsBusy}" />
+          <TextBlock Classes="hint" Text="{Binding CurrentFile}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <TabControl SelectedIndex="{Binding ActiveTab}" IsEnabled="{Binding !IsBusy}">
+
+      <!-- ===================== CONFIGURARE ===================== -->
+      <TabItem Header="1. Configurare" FontSize="15">
+        <ScrollViewer>
+          <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,12,Auto" Margin="0,8,8,8">
+
+            <StackPanel Grid.Column="0">
+              <TextBlock Classes="h" Text="Foldere protejate" />
+              <TextBlock Classes="hint" Margin="0,0,0,6"
+                         Text="Din aceste foldere și subfolderele lor nu se șterge, nu se mută și nu se redenumește nimic, niciodată." />
+              <ListBox ItemsSource="{Binding ProtectedFolders}" SelectedItem="{Binding SelectedProtected}" Height="130" />
+              <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,6,0,0">
+                <Button Content="Adaugă..." Command="{Binding AddProtectedCommand}" />
+                <Button Content="Elimină" Command="{Binding RemoveProtectedCommand}" />
+              </StackPanel>
+              <CheckBox Margin="0,6,0,0" IsChecked="{Binding IncludeProtectedInScan}"
+                        Content="Compară și cu fișierele din folderele protejate (ca originale)" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="2">
+              <TextBlock Classes="h" Text="Locații de căutare" />
+              <TextBlock Classes="hint" Margin="0,0,0,6" Text="Căutare recursivă. Ordinea dă prioritatea pentru auto-selecția „locație prioritară”." />
+              <ListBox ItemsSource="{Binding SearchLocations}" SelectedItem="{Binding SelectedLocation}" Height="130" />
+              <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,6,0,0">
+                <Button Content="Adaugă..." Command="{Binding AddLocationCommand}" />
+                <Button Content="Elimină" Command="{Binding RemoveLocationCommand}" />
+                <Button Content="Sus" Command="{Binding MoveLocationUpCommand}" />
+                <Button Content="Jos" Command="{Binding MoveLocationDownCommand}" />
+              </StackPanel>
+              <CheckBox Margin="0,6,0,0" IsChecked="{Binding ExcludeSystemFolders}"
+                        Content="Exclude folderele de sistem (Windows, Program Files, ProgramData, coș)" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="2" Grid.Column="0">
+              <TextBlock Classes="h" Text="Tipuri de fișiere" />
+              <WrapPanel>
+                <CheckBox Content="Imagini" IsChecked="{Binding PresetImages}" Margin="0,0,14,0" />
+                <CheckBox Content="Video" IsChecked="{Binding PresetVideo}" Margin="0,0,14,0" />
+                <CheckBox Content="Audio" IsChecked="{Binding PresetAudio}" Margin="0,0,14,0" />
+                <CheckBox Content="Documente" IsChecked="{Binding PresetDocuments}" Margin="0,0,14,0" />
+                <CheckBox Content="Toate fișierele" IsChecked="{Binding AllFiles}" />
+              </WrapPanel>
+              <TextBlock Classes="hint" Text="Extensii personalizate (ex. dwg, zip):" Margin="0,8,0,3" />
+              <TextBox Text="{Binding CustomExtensions}" />
+              <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,10,0,0">
+                <StackPanel>
+                  <TextBlock Classes="hint" Text="Mărime minimă (KB, 0 = ignoră doar fișierele goale)" Margin="0,0,0,3" />
+                  <NumericUpDown Value="{Binding MinSizeKb}" Minimum="0" Increment="100" Width="170" HorizontalAlignment="Left" />
+                </StackPanel>
+                <StackPanel>
+                  <TextBlock Classes="hint" Text="Citiri simultane (HDD: 1-2, SSD: 4-8)" Margin="0,0,0,3" />
+                  <NumericUpDown Value="{Binding MaxParallelism}" Minimum="1" Maximum="16" Width="120" HorizontalAlignment="Left" FormatString="0" />
+                </StackPanel>
+              </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Row="2" Grid.Column="2">
+              <TextBlock Classes="h" Text="Subfoldere excluse" />
+              <ListBox ItemsSource="{Binding ExcludedSubfolders}" SelectedItem="{Binding SelectedExcluded}" Height="74" />
+              <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,6,0,0">
+                <Button Content="Adaugă..." Command="{Binding AddExcludedCommand}" />
+                <Button Content="Elimină" Command="{Binding RemoveExcludedCommand}" />
+                <Button Content="Golește cache-ul de hash-uri" Command="{Binding ClearCacheCommand}" />
+              </StackPanel>
+              <Button Content="Pornește scanarea" Command="{Binding StartScanCommand}" Margin="0,12,0,0"
+                      FontWeight="SemiBold" Padding="26,8" Background="#1976D2" Foreground="White" />
+            </StackPanel>
+          </Grid>
+        </ScrollViewer>
+      </TabItem>
+
+      <!-- ===================== REZULTATE ===================== -->
+      <TabItem Header="2. Rezultate" FontSize="15">
+        <DockPanel Margin="0,8,0,0">
+
+          <StackPanel DockPanel.Dock="Top" Spacing="6">
+            <DockPanel>
+              <TextBlock DockPanel.Dock="Right" Text="{Binding SelectionText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding SummaryText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+
+            <WrapPanel>
+              <TextBlock Text="Auto-selecție, păstrează:" VerticalAlignment="Center" Margin="0,0,6,4" />
+              <ComboBox SelectedIndex="{Binding RuleIndex}" Width="200" Margin="0,0,6,4">
+                <ComboBoxItem>locația prioritară</ComboBoxItem>
+                <ComboBoxItem>cea mai veche</ComboBoxItem>
+                <ComboBoxItem>cea mai nouă</ComboBoxItem>
+                <ComboBoxItem>calea cea mai scurtă</ComboBoxItem>
+              </ComboBox>
+              <Button Content="Aplică" Command="{Binding ApplyRuleCommand}" Margin="0,0,6,4" />
+              <Button Content="Golește selecția" Command="{Binding ClearSelectionCommand}" Margin="0,0,24,4" />
+              <TextBlock Text="Sortare:" VerticalAlignment="Center" Margin="0,0,6,4" />
+              <ComboBox SelectedIndex="{Binding SortIndex}" Width="170" Margin="0,0,12,4">
+                <ComboBoxItem>spațiu recuperabil</ComboBoxItem>
+                <ComboBoxItem>număr de copii</ComboBoxItem>
+                <ComboBoxItem>folder</ComboBoxItem>
+              </ComboBox>
+              <TextBox Text="{Binding FilterText}" Watermark="Filtru după cale..." Width="220" Margin="0,0,12,4" />
+              <CheckBox Content="Ascunde copiile din folderele protejate" IsChecked="{Binding HideProtectedInResults}" Margin="0,0,0,4" />
+            </WrapPanel>
+
+            <DockPanel>
+              <TextBlock DockPanel.Dock="Left" Text="Selecție pe folder:" VerticalAlignment="Center" Margin="0,0,6,0" />
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6" Margin="6,0,0,0">
+                <Button Content="Alege..." Command="{Binding PickSelectionFolderCommand}" />
+                <Button Content="Folderul fișierului" Command="{Binding UseFolderOfSelectedFileCommand}" IsEnabled="{Binding HasSelectedFile}" />
+                <Button Content="Selectează" Command="{Binding SelectFolderCommand}" />
+                <Button Content="Deselectează" Command="{Binding DeselectFolderCommand}" />
+              </StackPanel>
+              <TextBox Text="{Binding FolderForSelection}" Watermark="Folderul (include subfolderele)" />
+            </DockPanel>
+            <CheckBox Content="Dacă toate copiile sunt în folder, păstrează una (după regula de auto-selecție)" IsChecked="{Binding KeepOneOnFolderSelect}" />
+
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#B45F06" TextWrapping="Wrap"
+                       IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          </StackPanel>
+
+          <!-- stergere -->
+          <Border DockPanel.Dock="Bottom" BorderBrush="#DDDDDD" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,8,0,0">
+            <WrapPanel>
+              <TextBlock Text="Acțiune:" VerticalAlignment="Center" Margin="0,0,6,4" />
+              <ComboBox SelectedIndex="{Binding DeleteModeIndex}" Width="200" Margin="0,0,10,4">
+                <ComboBoxItem>Mută în Recycle Bin</ComboBoxItem>
+                <ComboBoxItem>Mută în carantină</ComboBoxItem>
+                <ComboBoxItem>Ștergere definitivă</ComboBoxItem>
+              </ComboBox>
+              <TextBox Text="{Binding QuarantineFolder}" Watermark="Folder carantină" Width="280" Margin="0,0,6,4" IsVisible="{Binding IsQuarantine}" />
+              <Button Content="Alege..." Command="{Binding PickQuarantineCommand}" Margin="0,0,10,4" IsVisible="{Binding IsQuarantine}" />
+              <CheckBox Content="Doar simulare" IsChecked="{Binding DryRun}" Margin="0,0,14,4" />
+              <Button Content="Execută" Command="{Binding ExecuteDeletionCommand}" Background="#C62828" Foreground="White" FontWeight="SemiBold" Padding="26,6" Margin="0,0,14,4" />
+              <Button Content="Exportă raport CSV" Command="{Binding ExportReportCommand}" Margin="0,0,0,4" />
+            </WrapPanel>
+          </Border>
+
+          <!-- previzualizare -->
+          <Border DockPanel.Dock="Right" Width="330" Margin="8,8,0,0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8">
+            <DockPanel>
+              <Button DockPanel.Dock="Bottom" Content="Deschide locația" Command="{Binding RevealSelectedCommand}" IsEnabled="{Binding HasSelectedFile}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,8,0,0" />
+              <TextBlock DockPanel.Dock="Bottom" Classes="hint" Text="{Binding SelectedPath}" Margin="0,8,0,0" />
+              <Panel>
+                <Image Source="{Binding Preview}" Stretch="Uniform" />
+                <TextBlock Classes="hint" Text="{Binding PreviewNote}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Panel>
+            </DockPanel>
+          </Border>
+
+          <ListBox ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" Margin="0,8,0,0">
+            <ListBox.Styles>
+              <Style Selector="ListBoxItem">
+                <Setter Property="Padding" Value="4,1" />
+              </Style>
+            </ListBox.Styles>
+            <ListBox.DataTemplates>
+              <DataTemplate DataType="vm:GroupRow">
+                <Border Background="#E8EEF7" Padding="6,3" Margin="0,4,0,0">
+                  <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Text="are copie protejată" Foreground="#7A5900" IsVisible="{Binding HasProtected}" FontSize="12" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13" />
+                  </DockPanel>
+                </Border>
+              </DataTemplate>
+              <DataTemplate DataType="vm:FileRow">
+                <Grid ColumnDefinitions="Auto,Auto,*,90,120">
+                  <CheckBox IsChecked="{Binding IsSelected}" IsEnabled="{Binding CanSelect}" MinWidth="0" Padding="0" Margin="4,0,6,0" VerticalAlignment="Center" />
+                  <Border Grid.Column="1" Background="#FFD54F" CornerRadius="3" Padding="5,0" Margin="0,0,6,0" VerticalAlignment="Center" IsVisible="{Binding IsProtected}">
+                    <TextBlock Text="PROTEJAT" FontSize="10" FontWeight="Bold" />
+                  </Border>
+                  <TextBlock Grid.Column="2" Text="{Binding Path}" TextTrimming="PathSegmentEllipsis" VerticalAlignment="Center" FontSize="13" ToolTip.Tip="{Binding Location}" />
+                  <TextBlock Grid.Column="3" Text="{Binding SizeText}" TextAlignment="Right" VerticalAlignment="Center" FontSize="13" />
+                  <TextBlock Grid.Column="4" Text="{Binding DateText}" TextAlignment="Right" VerticalAlignment="Center" FontSize="13" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.DataTemplates>
+          </ListBox>
+        </DockPanel>
+      </TabItem>
+
+      <!-- ===================== ERORI SI OPERATII ===================== -->
+      <TabItem Header="3. Erori și operații" FontSize="15">
+        <Grid RowDefinitions="Auto,*,12,Auto,*" Margin="0,8,0,0">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="Repornește ca administrator" Command="{Binding RestartElevatedCommand}" IsVisible="{Binding ShowElevate}" />
+            <TextBlock Classes="h" Text="{Binding IssuesSummary, StringFormat='Elemente sărite la scanare. {0}'}" VerticalAlignment="Center" />
+          </DockPanel>
+          <ListBox Grid.Row="1" ItemsSource="{Binding Issues}" Margin="0,6,0,0">
+            <ListBox.ItemTemplate>
+              <DataTemplate DataType="scan:ScanIssue">
+                <StackPanel>
+                  <TextBlock Text="{Binding Path}" FontSize="13" />
+                  <TextBlock Classes="hint" Text="{Binding Message}" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Grid.Row="3" Classes="h" Text="Rezultatul ultimei operații" />
+          <ListBox Grid.Row="4" ItemsSource="{Binding OperationLines}" Margin="0,6,0,0" FontSize="13" />
+        </Grid>
+      </TabItem>
+    </TabControl>
+  </DockPanel>
+</Window>

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <NoWarn>$(NoWarn);CA1416;xUnit1051</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageReference Include="Avalonia.Headless" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Skia" Version="11.3.20" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dubluri.Core\Dubluri.Core.csproj" />
+    <ProjectReference Include="..\Dubluri.Platform.Windows\Dubluri.Platform.Windows.csproj" />
+    <ProjectReference Include="..\Dubluri.App\Dubluri.App.csproj" />
+  </ItemGroup>
+</Project>

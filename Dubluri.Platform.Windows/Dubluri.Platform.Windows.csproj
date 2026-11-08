@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- net10.0 (nu net10.0-windows): API-urile Windows sunt apeluri native, iar aplicatia ramane portabila -->
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dubluri.Core\Dubluri.Core.csproj" />
+  </ItemGroup>
+</Project>

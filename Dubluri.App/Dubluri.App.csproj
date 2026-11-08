@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>Dubluri</AssemblyName>
+    <RootNamespace>Dubluri.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\dubluri.ico</ApplicationIcon>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <Description>Găsește și șterge în siguranță fișierele duplicate</Description>
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+    <!-- bibliotecile native (Skia, HarfBuzz) raman DLL-uri langa .exe: nu se dezarhiveaza in Temp la pornire -->
+    <IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.20" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dubluri.Core\Dubluri.Core.csproj" />
+    <ProjectReference Include="..\Dubluri.Platform.Windows\Dubluri.Platform.Windows.csproj" />
+  </ItemGroup>
+
+</Project>
