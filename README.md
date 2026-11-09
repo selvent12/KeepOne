@@ -65,3 +65,7 @@ The symlink test is skipped unless you run as administrator or have Developer Mo
 2. The Linux branch in `Dubluri.App/PlatformServices.cs`.
 3. Publishing with `-r linux-x64`.
 4. Adapting the tests that use `cmd.exe` (`mklink`, `subst`) and Windows paths.
+
+## License
+
+MIT. See [LICENSE](LICENSE) for the full text.
